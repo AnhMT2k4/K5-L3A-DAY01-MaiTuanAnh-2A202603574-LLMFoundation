@@ -27,13 +27,11 @@
 | **4b. LLM lớn zero-shot (gpt-oss-120b)** | 0.952* | 0.952 | 2401.08 ms | $0.000 |
 | **4c. LLM nhỏ few-shot** | 0.976* | 0.976 | 3094.99 ms | $0.000 |
 
-
 ## 3. Dự đoán và thực tế
 
-1. **Dự đoán `llm_models`:** Bạn đoán model lớn `gpt-6.1-terra` sẽ có F1 cao gấp 1.5 lần model nhỏ, nhưng thực tế cả hai model (`gpt-oss-120b` và `gpt-oss-20b`) đều đạt F1 bằng nhau là **0.952**. Sự lệch này là do với các tác vụ phân loại ngắn và tương đối rõ ràng, năng lực suy luận của model nhỏ đã đủ đáp ứng, việc tăng kích thước mô hình không mang lại sự khác biệt lớn về hiệu năng.
-2. **Dự đoán `dl_relu`:** Bạn đoán bỏ ReLU thì F1 sẽ tăng, nhưng thực tế khi bỏ ReLU, F1 đạt **0.933** (giảm nhẹ so với 0.938 của mạng MLP đầy đủ). Không có ReLU kích hoạt phi tuyến tính, mạng MLP bị thoái hóa thành một mô hình tuyến tính đơn giản tương đương với Logistic Regression, làm mất đi khả năng học các tổ hợp đặc trưng phức tạp.
-3. **Dự đoán `tradeoff`:** Bạn đoán LLM nhỏ và lớn sẽ nằm trên đường Pareto. Tuy nhiên, thực tế chỉ có **BoW + LogReg** (tối ưu nhất về tốc độ) và **LLM nhỏ few-shot** (tối ưu nhất về F1) là nằm trên đường Pareto. Các mô hình LLM zero-shot bị lấn át hoàn toàn bởi few-shot về mặt chất lượng trong khi độ trễ không chênh lệch đáng kể.
-
+- **Dự đoán** `llm_models`**:** Bạn đoán model lớn `gpt-6.1-terra` sẽ có F1 cao gấp 1.5 lần model nhỏ, nhưng thực tế cả hai model (`gpt-oss-120b` và `gpt-oss-20b`) đều đạt F1 bằng nhau là **0.952**. Sự lệch này là do với các tác vụ phân loại ngắn và tương đối rõ ràng, năng lực suy luận của model nhỏ đã đủ đáp ứng, việc tăng kích thước mô hình không mang lại sự khác biệt lớn về hiệu năng.
+- **Dự đoán** `dl_relu`**:** Bạn đoán bỏ ReLU thì F1 sẽ tăng, nhưng thực tế khi bỏ ReLU, F1 đạt **0.933** (giảm nhẹ so với 0.938 của mạng MLP đầy đủ). Không có ReLU kích hoạt phi tuyến tính, mạng MLP bị thoái hóa thành một mô hình tuyến tính đơn giản tương đương với Logistic Regression, làm mất đi khả năng học các tổ hợp đặc trưng phức tạp.
+- **Dự đoán** `tradeoff`**:** Bạn đoán LLM nhỏ và lớn sẽ nằm trên đường Pareto. Tuy nhiên, thực tế chỉ có **BoW + LogReg** (tối ưu nhất về tốc độ) và **LLM nhỏ few-shot** (tối ưu nhất về F1) là nằm trên đường Pareto. Các mô hình LLM zero-shot bị lấn át hoàn toàn bởi few-shot về mặt chất lượng trong khi độ trễ không chênh lệch đáng kể.
 
 ## 4. Phân tích 50 case khó
 
@@ -41,11 +39,20 @@
 * **Nhóm case gây lỗi nặng nhất:** Nhóm **Né từ khóa (Obfuscation)** và **Tưởng spam nhưng không phải (Ham looks spam)**.
 
 **2 Case cụ thể khiến model sai:**
-1. **Case #29 (`C0ngr4tulat10ns! Y0u h4ve w0n...`):** Thật là **Spam** nhưng các mô hình BoW đoán là **Ham**. Cơ chế sai là do tin nhắn cố tình thay thế chữ bằng số (`0` thay `o`, `4` thay `a`), khiến các từ này biến thành các token lạ lẫm không nằm trong bộ từ điển `vocab` (đã được xây dựng từ tập Train bình thường). BoW hoàn toàn mất dấu vết từ khóa.
-2. **Case #2 (`FREE pizza in the office...`):** Thật là **Ham** nhưng các mô hình Embedding/LLM nhạy cảm dễ đoán nhầm thành **Spam**. Cơ chế sai là do sự xuất hiện dày đặc của các từ khóa kích thích mạnh như "FREE", "right now", "come quick" thường chỉ có ở spam. Nếu không phân tích sâu ngữ cảnh "office kitchen" (đồng nghiệp gọi nhau), mô hình sẽ bị đánh lừa.
 
+- **Case #29 (**`C0ngr4tulat10ns! Y0u h4ve w0n...`**):** Thật là **Spam** nhưng các mô hình BoW đoán là **Ham**. Cơ chế sai là do tin nhắn cố tình thay thế chữ bằng số (`0` thay `o`, `4` thay `a`), khiến các từ này biến thành các token lạ lẫm không nằm trong bộ từ điển `vocab` (đã được xây dựng từ tập Train bình thường). BoW hoàn toàn mất dấu vết từ khóa.
+- **Case #2 (**`FREE pizza in the office...`**):** Thật là **Ham** nhưng các mô hình Embedding/LLM nhạy cảm dễ đoán nhầm thành **Spam**. Cơ chế sai là do sự xuất hiện dày đặc của các từ khóa kích thích mạnh như "FREE", "right now", "come quick" thường chỉ có ở spam. Nếu không phân tích sâu ngữ cảnh "office kitchen" (đồng nghiệp gọi nhau), mô hình sẽ bị đánh lừa.
 
-## 5. Thử thách cá nhân (Đề #5)
+## 5. Thử thách cá nhân
+
+- **Tin 1 (**`Spam`**) & Tin 2 (**`Spam`**):**
+  - **Kết quả dự đoán:** Cả BoW và Embedding+LR đều đoán nhầm thành **Ham** (False Negative).
+  - **Giải thích:** Tập dữ liệu huấn luyện nhỏ ban đầu chỉ chứa các mẫu tiếng Anh ("win", "free", "money"). Khi đưa vào các tin nhắn tiếng Việt (dù là viết sai chính tả lách luật như *"đừờng dẫnn"* hay không dấu như *"Tai khoan ngan hang"*), cả hai mô hình đều không tìm thấy đặc trưng/từ khóa tương ứng trong tập từ vựng (Vocabulary Out-Of-Vocabulary / OOV). Do đó, mô hình mặc định phân loại về nhãn đa số/an toàn là **Ham**.
+- **Tin 3 (**`Ham`**) & Tin 4 (**`Ham`**):**
+  - **Kết quả dự đoán:** Cả BoW và Embedding+LR đều đoán nhầm thành **Spam** (False Positive).
+  - **Giải thích:** Cả hai tin nhắn này đều cố ý chứa các từ khóa nhạy cảm xuất hiện dày đặc trong tập train spam là **"free"** và **"win"** (*"Free ticket... win this game"*, *"free sample code... win the competition"*).
+    - **BoW** thất bại vì nó hoạt động theo cơ chế khớp từ đơn lẻ (Exact Word Matching) — thấy "free" và "win" là gán ngay nhãn Spam.
+    - **Embedding+LR (TF-IDF)** trong trường hợp tập train quá nhỏ cũng bị phụ thuộc nặng vào trọng số TF-IDF của từ "free"/"win" mà chưa học đủ sâu ngữ cảnh của toàn bộ câu (vé xem ca nhạc hay bài tập về nhà).
 
 ## 6. Phương án cho sản phẩm thật
 
@@ -62,7 +69,6 @@
 * **AI Log:**
   * *Hỏi:* Cách viết prompt zero-shot và few-shot tối ưu cấu trúc phân loại đầu ra một từ.
   * *Nhận:* Mẫu prompt phân tách rõ ràng phần System Instructions và User Message.
- 
 * **Điều hiểu ra sau buổi lab:**
   * Hiểu rõ cơ chế toán học đằng sau quá trình huấn luyện bằng Gradient Descent trực quan qua đường Loss với các mức Learning Rate khác nhau.
   * Nhận thức được rằng độ chính xác cao (Accuracy) trên tập dữ liệu lệch (Imbalanced) là một cái bẫy nguy hiểm; F1-score mới là thước đo phản ánh đúng bản chất hệ thống phòng chống spam.
